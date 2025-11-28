@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GeM Scraper Dashboard</title>
+    <script>
+        function startScraping() {
+            fetch("/start")
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === "already_running") {
+                    alert("Scraper already running!");
+                }
+            });
+        }
+
+        function updateProgress() {
+            fetch("/progress")
+            .then(r => r.json())
+            .then(p => {
+                document.getElementById("msg").innerText = p.message;
+                document.getElementById("pg").innerText = p.current + " / " + p.total;
+
+                if (p.running === false && p.total > 0) {
+                    document.getElementById("done").style.display = "block";
+                }
+            });
+        }
+
+        setInterval(updateProgress, 1000);
+    </script>
+</head>
+<body style="font-family: Arial; padding:20px">
+    <h2>GeM Scraper Dashboard</h2>
+
+    <button onclick="startScraping()">Start Scraping</button>
+
+    <h3>Status:</h3>
+    <p id="msg">Idle</p>
+    <p>Page: <span id="pg">0 / 0</span></p>
+
+    <div id="done" style="display:none;">
+        <a href="/download">Download CSV</a>
+    </div>
+
+</body>
+</html>
