@@ -91,7 +91,18 @@ async def scrape_all():
     PROGRESS["message"] = "Starting chromium..."
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(channel="chrome", headless=False)
+        browser = await p.chromium.launch(
+            channel="chrome",
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--disable-software-rasterizer"
+            ]
+        )
+
+
         context = await browser.new_context()
         page = await context.new_page()
 
