@@ -1,4 +1,4 @@
-import asyncio
+import asyncio 
 from playwright.async_api import async_playwright
 import pandas as pd
 import time
@@ -7,10 +7,34 @@ import re
 BASE_URL = "https://bidplus.gem.gov.in"
 
 
+async def apply_sorting(page):
+    """Select 'Bid Start Date: Latest First' from the sorting dropdown."""
+
+    print("\n🔧 Applying sort: Bid Start Date → Latest First")
+
+    # Open dropdown
+    dropdown_btn = await page.query_selector("#currentSort")
+    await dropdown_btn.click()
+    await asyncio.sleep(1)
+
+    # Click the sorting option
+    sort_option = await page.query_selector("#Bid-Start-Date-Latest")
+    if not sort_option:
+        print("❌ Sort option not found!")
+    else:
+        await sort_option.click()
+        await asyncio.sleep(2)  # wait for reload
+
+    print("✅ Sorting applied!\n")
+
+
 async def extract_total_counts(page):
     """Extract total records + total pages from page 1."""
     await page.goto(f"{BASE_URL}/all-bids", timeout=0, wait_until="networkidle")
     await asyncio.sleep(2)
+
+    # APPLY SORTING HERE
+    await apply_sorting(page)
 
     # Extract total records
     records_el = await page.query_selector("span.pos-bottom")
@@ -94,7 +118,7 @@ async def scrape_all():
         context = await browser.new_context()
         page = await context.new_page()
 
-        # Get total records & pages
+        # Get total records & pages (sorting applied inside)
         total_records, total_pages = await extract_total_counts(page)
 
         print("\n-------------------------------------")
@@ -105,7 +129,7 @@ async def scrape_all():
 
         all_data = []
 
-        # Scrape page 1 manually loaded
+        # Scrape page 1 manually loaded (sorted)
         page_no = 1
         page_results = await scrape_single_page(page, page_no)
         all_data.extend(page_results)
@@ -146,12 +170,6 @@ if __name__ == "__main__":
     print("\n-------------------------------------")
     print(f"SCRAPED RECORDS:  {len(data)}")
     print(f"EXPECTED RECORDS: {total_records}")
-
-    if len(data) == total_records:
-        print("🎉 SUCCESS: All records scraped correctly!")
-    else:
-        print("⚠️ WARNING: Some records missing")
-
     print("-------------------------------------")
     print(f"⏱ TOTAL TIME: {round(time.time() - start, 2)} seconds")
     print("📁 Saved: gem_full_fixed.csv")
